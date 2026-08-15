@@ -5,7 +5,7 @@ from matplotlib.ticker import MaxNLocator
 from datetime import datetime, timedelta
 import os
 
-def create_plot(df, title, filename):
+def create_plot(df, title, filename, is_clones=False):
     # 1. Asegurar formato de fecha pura y limpiar duplicados del origen de inmediato
     df.index = pd.to_datetime(df.index).date
     df = df[~df.index.duplicated(keep='last')]
@@ -19,7 +19,7 @@ def create_plot(df, title, filename):
     if first_day == last_day:
         first_day = first_day - timedelta(days=7)
 
-    # add zeros if there is no value 
+    # Agregar ceros en los días donde no hubo actividad para evitar saltos en la gráfica
     date_range = pd.date_range(start=first_day, end=last_day, freq='D').date
     df_full = pd.DataFrame(index=date_range, columns=df.columns).fillna(0)
     
@@ -28,14 +28,19 @@ def create_plot(df, title, filename):
     
     df_full.update(df)
     
-    total_views = df_full["count"].sum()
+    # Determinar etiquetas según el tipo de datos (visitas o clones)
+    count_label = "Clones" if is_clones else "Views"
+    unique_label = "Unique Cloners" if is_clones else "Unique Visitors"
+    color_line1 = 'green' if is_clones else 'blue'
+    
+    total_count = df_full["count"].sum()
     total_uniques = df_full["uniques"].sum()
     
     plt.figure(figsize=(12, 6))
-    plt.plot(df_full.index, df_full["count"], label="Views", color='blue')
-    plt.plot(df_full.index, df_full["uniques"], label="Unique Visitors", color='red')
+    plt.plot(df_full.index, df_full["count"], label=count_label, color=color_line1)
+    plt.plot(df_full.index, df_full["uniques"], label=unique_label, color='red')
     
-    plt.title(f"{title} ({total_views} Views, {total_uniques} Unique Visitors)")
+    plt.title(f"{title} ({total_count} {count_label}, {total_uniques} {unique_label})")
     plt.xlabel('Date')
     plt.ylabel('Count')
     plt.legend()
@@ -50,37 +55,46 @@ def main():
     with open('github_username.txt', 'r') as file:
         owner = file.read().strip()
 
-    data_dir = 'data/github_views'
     plots_dir = 'preview_plots'
     os.makedirs(plots_dir, exist_ok=True)
+    
+    # PROCESAR CARPETA DE VISITAS
+    views_dir = 'data/github_views'
+    if os.path.exists(views_dir):
+        for filename in sorted(os.listdir(views_dir)):
+            if filename.endswith('.csv'):
+                repo = filename[:-4]
+                views_df = pd.read_csv(os.path.join(views_dir, filename), parse_dates=['date'])
+                views_df.set_index('date', inplace=True)
+                plot_filename = f'{plots_dir}/{repo}.webp'
+                create_plot(views_df, f'{owner}/{repo}', plot_filename, is_clones=False)
+                print(f"Created views plot for {owner}/{repo}")
 
-    for filename in sorted(os.listdir(data_dir)):
-        if filename.endswith('.csv'):
-            repo = filename[:-4]
-            
-            views_df = pd.read_csv(os.path.join(data_dir, filename), parse_dates=['date'])
-            views_df.set_index('date', inplace=True)
-            
-            plot_filename = f'{plots_dir}/{repo}.webp'
-            create_plot(views_df, f'{owner}/{repo}', plot_filename)
-            print(f"Created plot for {owner}/{repo}")
+    # PROCESAR CARPETA DE CLONES
+    clones_dir = 'data/github_clones'
+    if os.path.exists(clones_dir):
+        for filename in sorted(os.listdir(clones_dir)):
+            if filename.endswith('.csv'):
+                repo = filename[:-4]
+                clones_df = pd.read_csv(os.path.join(clones_dir, filename), parse_dates=['date'])
+                clones_df.set_index('date', inplace=True)
+                plot_filename = f'{plots_dir}/{repo}_clones.webp'
+                create_plot(clones_df, f'{owner}/{repo}', plot_filename, is_clones=True)
+                print(f"Created clones plot for {owner}/{repo}")
 
     # --- GENERACIÓN DINÁMICA DE CAJAS EN ESPAÑOL ---
     cards_html = ""
-    
-    # Escanear la carpeta de gráficos para renderizar de manera automática todas las cajas existentes
     if os.path.exists(plots_dir):
         for plot_file in sorted(os.listdir(plots_dir)):
             if plot_file.endswith('.webp'):
-                # Identificar dinámicamente si es gráfico de Visitas o de Clones
-                tipo_grafico = "Clonaciones y Descargas" if "clones" in plot_file.lower() else "Visitas y Tráfico Web"
+                is_clone_type = "clones" in plot_file.lower()
+                tipo_grafico = "Clonaciones y Descargas" if is_clone_type else "Visitas y Tráfico Web"
                 repo_name = plot_file.replace('.webp', '').replace('_clones', '')
                 
-                # Definir la explicación en español según el tipo de gráfico detectado
-                if "clones" in plot_file.lower():
-                    descripcion = f"Este panel detalla el volumen histórico de descargas y clones locales del repositorio <strong>{repo_name}</strong>. Permite evaluar cuántos desarrolladores están interactuando activamente con el código base en sus entornos de trabajo locales tras descubrir el proyecto."
+                if is_clone_type:
+                    descripcion = f"Este panel detalla el volumen histórico de descargas y clones locales del repositorio <strong>{repo_name}</strong>. La línea verde indica la cantidad de veces que el código fue copiado a computadoras locales, mientras que la línea roja señala cuántos desarrolladores únicos realizaron dicha acción. Es clave para medir el interés técnico de uso del proyecto."
                 else:
-                    descripcion = f"Este panel consolida el comportamiento histórico de la comunidad en tu repositorio <strong>{repo_name}</strong>. La línea azul refleja las vistas totales acumuladas y la línea roja muestra a los usuarios únicos semanales."
+                    descripcion = f"Este panel consolida el comportamiento histórico de navegación en tu repositorio <strong>{repo_name}</strong>. La línea azul refleja las vistas totales acumuladas (tráfico total recurrente) y la línea roja muestra a los usuarios únicos semanales que ingresaron a explorar la página del proyecto."
 
                 cards_html += f"""
         <div class="card">
@@ -200,7 +214,7 @@ def main():
     
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print("index.html sobreescrito dinámicamente con todas las gráficas")
+    print("index.html sobreescrito dinámicamente con múltiples carpetas de datos")
 
 if __name__ == "__main__":
     main()
