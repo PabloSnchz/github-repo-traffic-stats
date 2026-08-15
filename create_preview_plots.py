@@ -64,5 +64,122 @@ def main():
             create_plot(views_df, f'{owner}/{repo}', plot_filename)
             print(f"Created plot for {owner}/{repo}")
 
+    # --- INYECCIÓN DE DISEÑO EN ESPAÑOL PERSONALIZADO ---
+    html_content = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas Históricas de Tráfico - GitHub</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent-color: #58a6ff;
+            --border-color: #30363d;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .plot-img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-top: 15px;
+            background-color: #fff;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .description-box {
+            margin-top: 20px;
+            background-color: rgba(88, 166, 255, 0.05);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        .description-box h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: #fff;
+        }
+        .description-box p {
+            margin: 5px 0 0 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+        footer {
+            margin-top: 5px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Historial de Tráfico Acumulado</h1>
+        <p class="subtitle">Visualización y respaldo de métricas a largo plazo para evitar la restricción de 14 días de GitHub.</p>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Repositorio: gw2-wallet-ligero</h2>
+            <img class="plot-img" src="preview_plots/gw2-wallet-ligero.webp" alt="Gráfico de tráfico gw2-wallet-ligero">
+            <div class="description-box">
+                <h3>¿Qué muestra este gráfico?</h3>
+                <p>Este panel consolida el comportamiento histórico de la comunidad en tu repositorio. La <strong>línea azul (Views)</strong> representa la cantidad total de visitas que ha recibido el proyecto día a día, permitiéndote identificar picos de interés cuando compartes actualizaciones. Por otro lado, la <strong>línea roja (Unique Visitors)</strong> refleja el número de desarrolladores reales e individuales que ingresaron, lo que te ayuda a distinguir entre el tráfico recurrentrente y el descubrimiento de nuevos usuarios.</p>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>Actualizado automáticamente mediante GitHub Actions en tu repositorio fork.</p>
+    </footer>
+</body>
+</html>"""
+    
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    print("index.html sobreescrito exitosamente en español")
+
 if __name__ == "__main__":
     main()
