@@ -15,6 +15,7 @@ def create_plot(df, title, filename):
     # add zeros if there is no value 
     date_range = pd.date_range(start=first_day_previous_month, end=last_day_previous_month, freq='D').date
     df_full = pd.DataFrame(index=date_range, columns=df.columns).fillna(0)
+    df_filtered = df_filtered[~df_filtered.index.duplicated(keep='last')]
     df_full.update(df_filtered)
     
     total_views = df_full["count"].sum()
