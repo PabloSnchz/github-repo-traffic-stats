@@ -31,5 +31,5 @@ jobs:
           git config --local user.email "noreply@github.com"
           git config --local user.name "Bot"
           git add preview_plots/*
-          git commit -m "update preview plots"
-          git push
+          git commit -m "update preview plots" || echo "No hay cambios en los gráficos para guardar"
+          git push || echo "Nada que subir"
