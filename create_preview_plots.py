@@ -6,16 +6,25 @@ from datetime import datetime, timedelta
 import os
 
 def create_plot(df, title, filename):
+    # 1. Asegurar formato de fecha pura y limpiar duplicados del origen de inmediato
+    df.index = pd.to_datetime(df.index).date
+    df = df[~df.index.duplicated(keep='last')]
+
     current_date = datetime.now().date()
     first_day_current_month = current_date.replace(day=1)
     last_day_previous_month = first_day_current_month - timedelta(days=1)
     first_day_previous_month = last_day_previous_month.replace(day=1)
+    
+    # 2. El filtrado ahora funcionará perfecto al usar el mismo tipo de dato
     df_filtered = df.loc[first_day_previous_month:last_day_previous_month]
 
     # add zeros if there is no value 
     date_range = pd.date_range(start=first_day_previous_month, end=last_day_previous_month, freq='D').date
     df_full = pd.DataFrame(index=date_range, columns=df.columns).fillna(0)
-    df_filtered = df_filtered[~df_filtered.index.duplicated(keep='last')]
+    
+    df_full.index = pd.to_datetime(df_full.index).date
+    df_full = df_full[~df_full.index.duplicated(keep='last')]
+    
     df_full.update(df_filtered)
     
     total_views = df_full["count"].sum()
