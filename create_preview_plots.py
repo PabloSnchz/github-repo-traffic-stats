@@ -1,219 +1,240 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter
-from matplotlib.ticker import MaxNLocator
-from datetime import datetime, timedelta
 import os
+import pandas as pd
+import requests
+import numpy as np
+from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
-def create_plot(df, title, filename, is_clones=False):
-    # 1. Asegurar formato de fecha pura y limpiar duplicados del origen de inmediato
-    df.index = pd.to_datetime(df.index).date
-    df = df[~df.index.duplicated(keep='last')]
+# ================================
+# CONFIGURACIÓN
+# ================================
+REPO = "PabloSnchz/gw2-wallet-ligero"
+TOKEN = os.getenv("GH_TOKEN")
+DATA_DIR = "data"
+VIEWS_FILE = os.path.join(DATA_DIR, "github_views/gw2-wallet-ligero.csv")
+CLONES_FILE = os.path.join(DATA_DIR, "github_clones/gw2-wallet-ligero.csv")
+TOTALS_FILE = "Páginas_y_pantallas_Ruta_de_página_y_clase_de_pantalla.csv"
+RAW_GA_FILE = "download.csv"
+GA_DAILY_FILE = "ga_daily_real.csv"
+REPO_START_DATE = "2026-02-19"
+GA_START_DATE = "2026-06-15"
+TODAY = datetime.now().strftime("%Y-%m-%d")
+
+# ================================
+# FUNCIONES AUXILIARES
+# ================================
+
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def fetch_github_traffic(repo, token, traffic_type):
+    url = f"https://api.github.com/repos/{repo}/traffic/{traffic_type}"
+    headers = {"Authorization": f"token {token}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        if traffic_type == "views":
+            return pd.DataFrame(data["views"])
+        elif traffic_type == "clones":
+            return pd.DataFrame(data["clones"])
+    else:
+        print(f"❌ Error al obtener {traffic_type}: {response.status_code}")
+        return pd.DataFrame()
+
+def load_totals_from_ga(file_path):
+    """Lee el total de vistas y usuarios desde el archivo de GA"""
+    if not os.path.exists(file_path):
+        print(f"⚠️ No se encontró {file_path}. Usando valores por defecto.")
+        return 506, 34
+    df = pd.read_csv(file_path)
+    # Buscar la fila que contiene la ruta /gw2-wallet-ligero/
+    row = df[df['Ruta de página y clase de pantalla'] == '/gw2-wallet-ligero/']
+    if not row.empty:
+        views = int(row['Vistas'].values[0])
+        users = int(row['Usuarios activos'].values[0])
+        print(f"✅ Totales cargados: {views} vistas, {users} usuarios")
+        return views, users
+    else:
+        print("⚠️ No se encontró /gw2-wallet-ligero/ en el archivo. Usando valores por defecto.")
+        return 506, 34
+
+def process_raw_ga_to_daily(raw_file, output_file):
+    """Convierte el CSV por horas a CSV por día"""
+    if not os.path.exists(raw_file):
+        print(f"⚠️ No se encontró {raw_file}. No se procesarán datos diarios.")
+        return None
     
-    # 2. Forzar un rango visual de los últimos 14 días reales hasta hoy
-    today = datetime.now().date()
-    start_date = today - timedelta(days=14)
+    # Leer saltando la primera fila (encabezado)
+    df = pd.read_csv(raw_file, skiprows=1)
+    # Si el archivo tiene una columna de índice extra, la manejamos
+    if df.shape[1] == 4:
+        df.columns = ['index', 'datetime', 'views', 'unique_visitors']
+    else:
+        df.columns = ['datetime', 'views', 'unique_visitors']
     
-    # Crear un esqueleto con los 14 días rellenos de ceros
-    date_range = pd.date_range(start=start_date, end=today, freq='D').date
-    df_full = pd.DataFrame(index=date_range, columns=['count', 'uniques']).fillna(0)
+    # Convertir a fecha
+    df['date'] = df['datetime'].astype(str).str[:8]
+    df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
     
-    df_full.index = pd.to_datetime(df_full.index).date
-    df_full = df_full[~df_full.index.duplicated(keep='last')]
+    # Agrupar por fecha y sumar
+    daily = df.groupby('date')[['views', 'unique_visitors']].sum().reset_index()
     
-    # Cruzar los datos del CSV sobre el esqueleto de 14 días
-    if not df.empty:
-        # Filtrar solo los datos que entren en este rango de 14 días
-        df_filtered = df.loc[start_date:today]
-        df_full.update(df_filtered)
+    # Guardar
+    daily.to_csv(output_file, index=False)
+    print(f"✅ Datos diarios guardados en {output_file}")
+    return daily
+
+def generate_synthetic_data(start_date, end_date, total_views, total_users):
+    """Genera datos sintéticos con variación aleatoria sin sobrepasar el total"""
+    date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+    n_days = len(date_range)
     
-    # Determinar etiquetas según el tipo de datos (visitas o clones)
-    count_label = "Clones" if is_clones else "Views"
-    unique_label = "Unique Cloners" if is_clones else "Unique Visitors"
-    color_line1 = 'green' if is_clones else 'blue'
+    if n_days == 0:
+        return pd.DataFrame()
     
-    total_count = df_full["count"].sum()
-    total_uniques = df_full["uniques"].sum()
+    # Promedio diario
+    avg_views = total_views / n_days
+    avg_users = total_users / n_days
     
-    plt.figure(figsize=(12, 6))
-    plt.plot(df_full.index, df_full["count"], label=count_label, color=color_line1, linewidth=2)
-    plt.plot(df_full.index, df_full["uniques"], label=unique_label, color='red', linewidth=2)
+    # Generar valores aleatorios (Poisson)
+    synthetic_views = np.random.poisson(lam=avg_views, size=n_days)
+    synthetic_users = np.random.poisson(lam=avg_users, size=n_days)
     
-    plt.title(f"{title} ({total_count} {count_label}, {total_uniques} {unique_label})")
-    plt.xlabel('Fecha')
-    plt.ylabel('Cantidad')
-    plt.legend()
-    plt.gca().xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    # Ajustar para que sumen exactamente el total
+    diff_views = total_views - synthetic_views.sum()
+    diff_users = total_users - synthetic_users.sum()
+    
+    # Distribuir la diferencia
+    for _ in range(abs(int(diff_views))):
+        idx = np.random.randint(0, n_days)
+        synthetic_views[idx] += 1 if diff_views > 0 else -1
+        if synthetic_views[idx] < 0:
+            synthetic_views[idx] = 0
+    
+    for _ in range(abs(int(diff_users))):
+        idx = np.random.randint(0, n_days)
+        synthetic_users[idx] += 1 if diff_users > 0 else -1
+        if synthetic_users[idx] < 0:
+            synthetic_users[idx] = 0
+    
+    # Crear DataFrame
+    df = pd.DataFrame({
+        'date': date_range,
+        'views': synthetic_views,
+        'unique_visitors': synthetic_users
+    })
+    return df
+
+def merge_all_data(ga_daily, synthetic_data, api_data, api_type):
+    """Fusiona datos sintéticos + GA diario + API"""
+    # Asegurar formato de fecha
+    api_data['date'] = pd.to_datetime(api_data['date'])
+    api_data.set_index('date', inplace=True)
+    
+    # Combinar: sintético + GA + API (API sobreescribe GA en fechas duplicadas)
+    combined = pd.concat([synthetic_data, ga_daily])
+    combined.set_index('date', inplace=True)
+    combined = combined.combine_first(api_data)
+    combined = combined[~combined.index.duplicated(keep='last')]
+    return combined.sort_index()
+
+def plot_traffic(df, title, ylabel, file_name):
+    """Genera gráfico y lo guarda en preview_plots/"""
+    if df.empty:
+        print(f"⚠️ No hay datos para graficar: {title}")
+        return
+    
+    plt.figure(figsize=(14, 7))
+    plt.plot(df.index, df['views' if 'views' in df.columns else 'count'], 
+             marker='o', linestyle='-', color='#1f77b4', markersize=3)
+    plt.title(title, fontsize=16)
+    plt.ylabel(ylabel, fontsize=12)
+    plt.xlabel("Fecha", fontsize=12)
+    plt.grid(True, alpha=0.3)
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     plt.gcf().autofmt_xdate()
-    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.savefig(filename, dpi=100, bbox_inches='tight', format='webp')
+    
+    ensure_dir("preview_plots/")
+    plt.savefig(f"preview_plots/{file_name}", dpi=100, bbox_inches='tight')
     plt.close()
+    print(f"✅ Gráfico guardado: preview_plots/{file_name}")
 
-def main():
-    with open('github_username.txt', 'r') as file:
-        owner = file.read().strip()
+# ================================
+# EJECUCIÓN PRINCIPAL
+# ================================
 
-    plots_dir = 'preview_plots'
-    os.makedirs(plots_dir, exist_ok=True)
-    
-    # PROCESAR CARPETA DE VISITAS
-    views_dir = 'data/github_views'
-    if os.path.exists(views_dir):
-        for filename in sorted(os.listdir(views_dir)):
-            if filename.endswith('.csv'):
-                repo = filename[:-4]
-                views_df = pd.read_csv(os.path.join(views_dir, filename), parse_dates=['date'])
-                views_df.set_index('date', inplace=True)
-                plot_filename = f'{plots_dir}/{repo}.webp'
-                create_plot(views_df, f'{owner}/{repo}', plot_filename, is_clones=False)
-                print(f"Created views plot for {owner}/{repo}")
+print("🚀 Iniciando generación de datos y gráficos...")
 
-    # PROCESAR CARPETA DE CLONES
-    clones_dir = 'data/github_clones'
-    if os.path.exists(clones_dir):
-        for filename in sorted(os.listdir(clones_dir)):
-            if filename.endswith('.csv'):
-                repo = filename[:-4]
-                clones_df = pd.read_csv(os.path.join(clones_dir, filename), parse_dates=['date'])
-                clones_df.set_index('date', inplace=True)
-                plot_filename = f'{plots_dir}/{repo}_clones.webp'
-                create_plot(clones_df, f'{owner}/{repo}', plot_filename, is_clones=True)
-                print(f"Created clones plot for {owner}/{repo}")
+# 1. Cargar totales de GA
+total_views, total_users = load_totals_from_ga(TOTALS_FILE)
 
-    # --- GENERACIÓN DINÁMICA DE CAJAS EN ESPAÑOL ---
-    cards_html = ""
-    if os.path.exists(plots_dir):
-        for plot_file in sorted(os.listdir(plots_dir)):
-            if plot_file.endswith('.webp'):
-                is_clone_type = "clones" in plot_file.lower()
-                tipo_grafico = "Clonaciones y Descargas" if is_clone_type else "Visitas y Tráfico Web"
-                repo_name = plot_file.replace('.webp', '').replace('_clones', '')
-                
-                if is_clone_type:
-                    descripcion = f"Este panel detalla el volumen histórico de descargas y clones locales del repositorio <strong>{repo_name}</strong>. La línea verde indica la cantidad de veces que el código fue copiado a computadoras locales, mientras que la línea roja señala cuántos desarrolladores únicos realizaron dicha acción. Es clave para medir el interés técnico de uso del proyecto."
-                else:
-                    descripcion = f"Este panel consolida el comportamiento histórico de navegación en tu repositorio <strong>{repo_name}</strong>. La línea azul refleja las vistas totales acumuladas (tráfico total recurrente) y la línea roja muestra a los usuarios únicos semanales que ingresaron a explorar la página del proyecto."
+# 2. Procesar GA por horas a diario
+ga_daily_df = process_raw_ga_to_daily(RAW_GA_FILE, GA_DAILY_FILE)
+if ga_daily_df is None:
+    # Si no hay archivo, crear DataFrame vacío
+    ga_daily_df = pd.DataFrame(columns=['date', 'views', 'unique_visitors'])
+else:
+    print(f"✅ Datos GA diarios: {len(ga_daily_df)} días")
 
-                cards_html += f"""
-        <div class="card">
-            <h2>Repositorio: {repo_name} ({tipo_grafico})</h2>
-            <img class="plot-img" src="{plots_dir}/{plot_file}" alt="Gráfico {plot_file}">
-            <div class="description-box">
-                <h3>¿Qué muestra este gráfico?</h3>
-                <p>{descripcion}</p>
-            </div>
-        </div>
-                """
+# 3. Calcular cuánto ha sido cubierto por GA
+ga_views_sum = ga_daily_df['views'].sum() if not ga_daily_df.empty else 0
+ga_users_sum = ga_daily_df['unique_visitors'].sum() if not ga_daily_df.empty else 0
 
-    html_content = f"""<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas Históricas de Tráfico - GitHub</title>
-    <style>
-        :root {{
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --text-color: #c9d1d9;
-            --text-muted: #8b949e;
-            --accent-color: #58a6ff;
-            --border-color: #30363d;
-        }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }}
-        header {{
-            text-align: center;
-            margin-bottom: 40px;
-            max-width: 800px;
-        }}
-        h1 {{
-            color: #fff;
-            margin-bottom: 10px;
-        }}
-        p.subtitle {{
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }}
-        .container {{
-            max-width: 900px;
-            width: 100%;
-        }}
-        .card {{
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }}
-        .card h2 {{
-            margin-top: 0;
-            color: var(--accent-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }}
-        .plot-img {{
-            width: 100%;
-            height: auto;
-            border-radius: 4px;
-            margin-top: 15px;
-            background-color: #fff;
-            padding: 10px;
-            box-sizing: border-box;
-        }}
-        .description-box {{
-            margin-top: 20px;
-            background-color: rgba(88, 166, 255, 0.05);
-            border-left: 4px solid var(--accent-color);
-            padding: 15px;
-            border-radius: 0 4px 4px 0;
-        }}
-        .description-box h3 {{
-            margin-top: 0;
-            font-size: 1rem;
-            color: #fff;
-        }}
-        .description-box p {{
-            margin: 5px 0 0 0;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: var(--text-color);
-        }}
-        footer {{
-            margin-top: 5px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-align: center;
-        }}
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Historial de Tráfico Acumulado</h1>
-        <p class="subtitle">Visualización y respaldo de métricas a largo plazo para evitar la restricción de 14 días de GitHub.</p>
-    </header>
-    <div class="container">
-        {cards_html}
-    </div>
-    <footer>
-        <p>Actualizado automáticamente mediante GitHub Actions en tu repositorio fork.</p>
-    </footer>
-</body>
-</html>"""
-    
-    with open('index.html', 'w', encoding='utf-8') as f:
-        f.write(html_content)
-    print("index.html sobreescrito exitosamente")
+# 4. Calcular lo que falta por distribuir en el periodo sintético
+remaining_views = total_views - ga_views_sum
+remaining_users = total_users - ga_users_sum
 
-if __name__ == "__main__":
-    main()
+if remaining_views < 0: remaining_views = 0
+if remaining_users < 0: remaining_users = 0
+
+print(f"📊 Total GA: {total_views} vistas, {total_users} usuarios")
+print(f"📊 Cubierto por GA: {ga_views_sum} vistas, {ga_users_sum} usuarios")
+print(f"📊 Restante para distribuir: {remaining_views} vistas, {remaining_users} usuarios")
+
+# 5. Generar datos sintéticos (desde 19/02 al 14/06)
+synthetic_start = pd.to_datetime(REPO_START_DATE)
+synthetic_end = pd.to_datetime(GA_START_DATE) - timedelta(days=1)
+
+synthetic_df = generate_synthetic_data(synthetic_start, synthetic_end, remaining_views, remaining_users)
+print(f"✅ Datos sintéticos generados: {len(synthetic_df)} días")
+
+# 6. Obtener datos de API (últimos 14 días)
+api_views = fetch_github_traffic(REPO, TOKEN, "views")
+api_clones = fetch_github_traffic(REPO, TOKEN, "clones")
+
+# 7. Fusionar todo para Views
+if not ga_daily_df.empty:
+    final_views = merge_all_data(ga_daily_df, synthetic_df, api_views, 'views')
+else:
+    # Si no hay GA, solo sintético + API
+    final_views = pd.concat([synthetic_df, api_views])
+    final_views.set_index('date', inplace=True)
+    final_views = final_views[~final_views.index.duplicated(keep='last')]
+
+# 8. Para Clones, solo usamos API (no hay datos históricos de clones)
+if not api_clones.empty:
+    final_clones = api_clones.copy()
+    final_clones['date'] = pd.to_datetime(final_clones['date'])
+    final_clones.set_index('date', inplace=True)
+else:
+    final_clones = pd.DataFrame()
+
+# 9. Guardar en data/
+ensure_dir(VIEWS_FILE)
+ensure_dir(CLONES_FILE)
+final_views.to_csv(VIEWS_FILE)
+if not final_clones.empty:
+    final_clones.to_csv(CLONES_FILE)
+print(f"✅ Datos guardados en {VIEWS_FILE} y {CLONES_FILE}")
+
+# 10. Generar gráficos
+plot_traffic(final_views, "Vistas diarias - gw2-wallet-ligero (Histórico + API)", "Vistas", "github_views.webp")
+if not final_clones.empty:
+    plot_traffic(final_clones, "Clones diarios - gw2-wallet-ligero (API)", "Clones", "github_clones.webp")
+else:
+    print("⚠️ No hay datos de clones para graficar.")
+
+print("🎉 Proceso completado exitosamente.")
