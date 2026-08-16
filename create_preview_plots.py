@@ -49,16 +49,23 @@ def load_totals_from_ga(file_path):
     if not os.path.exists(file_path):
         print(f"⚠️ No se encontró {file_path}. Usando valores por defecto.")
         return 506, 34
-    df = pd.read_csv(file_path)
-    # Buscar la fila que contiene la ruta /gw2-wallet-ligero/
-    row = df[df['Ruta de página y clase de pantalla'] == '/gw2-wallet-ligero/']
-    if not row.empty:
-        views = int(row['Vistas'].values[0])
-        users = int(row['Usuarios activos'].values[0])
-        print(f"✅ Totales cargados: {views} vistas, {users} usuarios")
-        return views, users
-    else:
-        print("⚠️ No se encontró /gw2-wallet-ligero/ en el archivo. Usando valores por defecto.")
+    
+    try:
+        # Leer con manejo de comillas y saltos de línea
+        df = pd.read_csv(file_path, skiprows=1, quotechar='"', on_bad_lines='skip')
+        
+        # Buscar la fila que contiene la ruta /gw2-wallet-ligero/
+        row = df[df['Ruta de página y clase de pantalla'] == '/gw2-wallet-ligero/']
+        if not row.empty:
+            views = int(row['Vistas'].values[0])
+            users = int(row['Usuarios activos'].values[0])
+            print(f"✅ Totales cargados: {views} vistas, {users} usuarios")
+            return views, users
+        else:
+            print("⚠️ No se encontró /gw2-wallet-ligero/ en el archivo. Usando valores por defecto.")
+            return 506, 34
+    except Exception as e:
+        print(f"⚠️ Error al leer {file_path}: {e}. Usando valores por defecto.")
         return 506, 34
 
 def process_raw_ga_to_daily(raw_file, output_file):
