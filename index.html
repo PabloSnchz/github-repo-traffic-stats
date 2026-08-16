@@ -1,184 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bóveda del Gato Negro - Tráfico Histórico</title>
-    <style>
-        :root {
-            --bg-color: #0a0c10;
-            --card-bg: #141820;
-            --border-color: #2a3340;
-            --text-main: #e6edf3;
-            --text-muted: #8b949e;
-            --gold-accent: #d4af37;
-            --cyan-accent: #58a6ff;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            max-width: 900px;
-            width: 100%;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
-        }
-
-        h1 {
-            color: #ffffff;
-            font-weight: 400;
-            letter-spacing: 2px;
-            font-size: 2.2rem;
-            margin: 0;
-        }
-
-        h1 span {
-            color: var(--gold-accent);
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin-top: 8px;
-            font-weight: 300;
-        }
-
-        .container {
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            transition: border-color 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: var(--cyan-accent);
-        }
-
-        .card h2 {
-            margin-top: 0;
-            color: var(--cyan-accent);
-            font-weight: 400;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .plot-img {
-            width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-top: 15px;
-            background-color: #ffffff; /* Fondo blanco para contraste de líneas */
-            padding: 15px;
-            box-sizing: border-box;
-            border: 1px solid #e1e4e8;
-        }
-
-        .description-box {
-            margin-top: 25px;
-            background-color: rgba(88, 166, 255, 0.05);
-            border-left: 4px solid var(--gold-accent);
-            padding: 15px 20px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .description-box h3 {
-            margin: 0 0 8px 0;
-            font-size: 1.1rem;
-            color: var(--gold-accent);
-        }
-
-        .description-box p {
-            margin: 0;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: var(--text-main);
-        }
-
-        .description-box strong {
-            color: #ffffff;
-        }
-
-        footer {
-            margin-top: 20px;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            text-align: center;
-            width: 100%;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bóveda del Gato Negro — Tráfico Histórico</title>
+  <style>
+    /* Estilos idénticos a la Guía de Usuario Avanzada v6.6.2 */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#0e0e10; color:#e9e9ee;
+      font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+      line-height:1.5; padding:40px 20px;
+    }
+    .container {
+      max-width:1000px; margin:0 auto;
+      background:#141418; border-radius:24px; padding:40px;
+      box-shadow:0 0 0 1px #1d1d20 inset,0 8px 24px rgba(0,0,0,0.3);
+    }
+    h1 {
+      font-size:2rem; margin-bottom:8px;
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    h1 .logo-text {
+      display: flex; align-items: center; gap: 10px;
+    }
+    h1 .gold { color: #ffd966; }
+    .version { 
+      color:#a0a0a6; margin-bottom:24px; padding-bottom:16px; 
+      border-bottom:1px solid #242428; 
+    }
+    h2 {
+      font-size:1.5rem; margin:32px 0 16px 0; padding-bottom:8px;
+      border-bottom:2px solid #ffd966; display:inline-block;
+    }
+    p, li { margin:6px 0; }
+    
+    /* Estilos de las tarjetas de gráficos */
+    .card {
+      margin: 24px 0; padding: 20px;
+      background:#0a0c10; border-radius:12px;
+      border:1px solid #2a2c35;
+    }
+    .card h3 {
+      color: #ffd966; font-size: 1.25rem; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    
+    /* Imágenes de gráficos (con fondo oscuro integrado desde el script) */
+    .plot-img {
+      width: 100%; height: auto; border-radius: 8px;
+      background: transparent; display: block;
+      border: 1px solid #2a2c35;
+    }
+    
+    /* Cajas de descripción estilo guía */
+    .description-box {
+      margin-top: 20px; padding: 16px;
+      background:#0f1116; border-left: 4px solid #ffd966;
+      border-radius: 0 8px 8px 0;
+    }
+    .description-box strong { color: #ffd966; }
+    
+    /* Footer idéntico a la guía */
+    .footer-note {
+      text-align:center; margin-top:32px; padding-top:16px;
+      border-top:1px solid #2a2c35; color:#a0a0a6; font-size:0.85rem;
+    }
+    .footer-note a { color:#ffd966; text-decoration:none; }
+    .footer-note a:hover { text-decoration:underline; }
+    
+    @media (max-width:600px) {
+      .container { padding:20px; }
+      h1 { font-size:1.6rem; }
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>🐈‍⬛ <span>Bóveda del Gato Negro</span></h1>
-        <p class="subtitle">Respaldo histórico de tráfico · gw2-wallet-ligero</p>
-    </header>
+<div class="container">
 
-    <div class="container">
-        
-        <!-- TARJETA DE VISTAS -->
-        <div class="card">
-            <h2>📊 Vistas diarias</h2>
-            
-            <img class="plot-img" src="preview_plots/github_views.webp" alt="Gráfico de visitas históricas">
-            
-            <div class="description-box">
-                <h3>🔍 Métricas de visitas</h3>
-                <p>
-                    La <strong>línea azul</strong> representa el total de visitas diarias a tu repositorio. 
-                    La <strong>línea roja</strong> refleja los usuarios únicos que ingresaron cada día. 
-                    Este histórico combina datos de Google Analytics (hasta agosto 2026) y datos en tiempo real de la API de GitHub.
-                </p>
-            </div>
-        </div>
+  <!-- HEADER IDÉNTICO A LA GUÍA -->
+  <h1>
+    <span class="logo-text">
+      🐈‍⬛ <span class="gold">Bóveda del Gato Negro</span>
+    </span>
+  </h1>
+  <div class="version">📊 Respaldo de Tráfico Histórico — gw2-wallet-ligero</div>
 
-        <!-- TARJETA DE CLONES -->
-        <div class="card">
-            <h2>📦 Clones diarios</h2>
-            
-            <img class="plot-img" src="preview_plots/github_clones.webp" alt="Gráfico de clones históricos">
-            
-            <div class="description-box">
-                <h3>🔍 Métricas de clones</h3>
-                <p>
-                    La <strong>línea azul</strong> muestra el número de clones (descargas) de tu repositorio por día. 
-                    La <strong>línea roja</strong> indica cuántos desarrolladores únicos realizaron esos clones. 
-                    Datos obtenidos directamente de la API de GitHub desde que se activó el sistema.
-                </p>
-            </div>
-        </div>
+  <p style="color:#a0a0a6; margin-bottom: 20px;">
+    Visualización y respaldo de métricas a largo plazo para evitar la restricción de 14 días de GitHub.
+    Datos reconstruidos desde el 19 de febrero de 2026 y combinados con Google Analytics.
+  </p>
 
+  <!-- TARJETA DE VISTAS -->
+  <h2>📈 Vistas diarias</h2>
+  <div class="card">
+    <h3>🔍 Métricas de visitas</h3>
+    <img class="plot-img" src="preview_plots/github_views.webp" alt="Gráfico de visitas históricas">
+    <div class="description-box">
+      <p>
+        La <strong>línea azul</strong> representa el total de visitas diarias a tu repositorio. 
+        La <strong>línea dorada</strong> refleja los usuarios únicos que ingresaron cada día. 
+        Este histórico combina datos de Google Analytics (hasta agosto 2026) y datos en tiempo real de la API de GitHub.
+      </p>
     </div>
+  </div>
 
-    <footer>
-        <p>Actualizado automáticamente · Datos acumulativos sin límite de 14 días</p>
-    </footer>
+  <!-- TARJETA DE CLONES -->
+  <h2>📦 Clones diarios</h2>
+  <div class="card">
+    <h3>🔍 Métricas de clones</h3>
+    <img class="plot-img" src="preview_plots/github_clones.webp" alt="Gráfico de clones históricos">
+    <div class="description-box">
+      <p>
+        La <strong>línea azul</strong> muestra el número de clones (descargas) de tu repositorio por día. 
+        La <strong>línea dorada</strong> indica cuántos desarrolladores únicos realizaron esos clones. 
+        Datos históricos reconstruidos con transiciones suaves y fusionados con la API de GitHub.
+      </p>
+    </div>
+  </div>
+
+  <!-- FOOTER IDÉNTICO A LA GUÍA -->
+  <div class="footer-note">
+    🐈‍⬛ <strong>Bóveda del Gato Negro</strong> — Respaldo Automatizado<br>
+    Actualizado vía GitHub Actions · Datos acumulativos sin límite de 14 días<br>
+    <br>
+    Discord: <a href="https://discord.gg/ZGNsfsqyKe" target="_blank">discord.gg/ZGNsfsqyKe</a><br>
+    GitHub: <a href="https://github.com/PabloSnchz/gw2-wallet-ligero" target="_blank">github.com/PabloSnchz/gw2-wallet-ligero</a>
+  </div>
+
+</div>
 
 </body>
 </html>
