@@ -3,116 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas Históricas de Tráfico - GitHub</title>
+    <title>Bóveda del Gato Negro - Tráfico Histórico</title>
     <style>
         :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --text-color: #c9d1d9;
+            --bg-color: #0a0c10;
+            --card-bg: #141820;
+            --border-color: #2a3340;
+            --text-main: #e6edf3;
             --text-muted: #8b949e;
-            --accent-color: #58a6ff;
-            --border-color: #30363d;
+            --gold-accent: #d4af37;
+            --cyan-accent: #58a6ff;
         }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 30px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
+
         header {
             text-align: center;
-            margin-bottom: 40px;
-            max-width: 800px;
-        }
-        h1 {
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-        .container {
+            margin-bottom: 50px;
             max-width: 900px;
             width: 100%;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
         }
+
+        h1 {
+            color: #ffffff;
+            font-weight: 400;
+            letter-spacing: 2px;
+            font-size: 2.2rem;
+            margin: 0;
+        }
+
+        h1 span {
+            color: var(--gold-accent);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 8px;
+            font-weight: 300;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            transition: border-color 0.3s ease;
         }
+
+        .card:hover {
+            border-color: var(--cyan-accent);
+        }
+
         .card h2 {
             margin-top: 0;
-            color: var(--accent-color);
+            color: var(--cyan-accent);
+            font-weight: 400;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            padding-bottom: 15px;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+
         .plot-img {
             width: 100%;
             height: auto;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-top: 15px;
-            background-color: #fff; /* Fondo blanco para resaltar las líneas del gráfico */
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .description-box {
-            margin-top: 20px;
-            background-color: rgba(88, 166, 255, 0.05);
-            border-left: 4px solid var(--accent-color);
+            background-color: #ffffff; /* Fondo blanco para contraste de líneas */
             padding: 15px;
-            border-radius: 0 4px 4px 0;
+            box-sizing: border-box;
+            border: 1px solid #e1e4e8;
         }
+
+        .description-box {
+            margin-top: 25px;
+            background-color: rgba(88, 166, 255, 0.05);
+            border-left: 4px solid var(--gold-accent);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
         .description-box h3 {
-            margin-top: 0;
-            font-size: 1rem;
-            color: #fff;
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            color: var(--gold-accent);
         }
+
         .description-box p {
-            margin: 5px 0 0 0;
+            margin: 0;
             font-size: 0.95rem;
-            line-height: 1.5;
-            color: var(--text-color);
+            line-height: 1.6;
+            color: var(--text-main);
         }
+
+        .description-box strong {
+            color: #ffffff;
+        }
+
         footer {
-            margin-top: 5px;
+            margin-top: 20px;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-align: center;
+            width: 100%;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Historial de Tráfico Acumulado</h1>
-        <p class="subtitle">Visualización y respaldo de métricas a largo plazo para evitar la restricción de 14 días de GitHub.</p>
+        <h1>🐈‍⬛ <span>Bóveda del Gato Negro</span></h1>
+        <p class="subtitle">Respaldo histórico de tráfico · gw2-wallet-ligero</p>
     </header>
 
     <div class="container">
-        <!-- Tarjeta para el proyecto gw2-wallet-ligero -->
+        
+        <!-- TARJETA DE VISTAS -->
         <div class="card">
-            <h2>Repositorio: gw2-wallet-ligero</h2>
+            <h2>📊 Vistas diarias</h2>
             
-            <!-- Carga el gráfico generado por el script de Python -->
-            <img class="plot-img" src="preview_plots/gw2-wallet-ligero.webp" alt="Gráfico de tráfico gw2-wallet-ligero">
+            <img class="plot-img" src="preview_plots/github_views.webp" alt="Gráfico de visitas históricas">
             
             <div class="description-box">
-                <h3>¿Qué muestra este gráfico?</h3>
-                <p>Este panel consolida el comportamiento histórico de la comunidad en tu repositorio. La <strong>línea azul (Views)</strong> representa la cantidad total de visitas que ha recibido el proyecto día a día, permitiéndote identificar picos de interés cuando compartes actualizaciones. Por otro lado, la <strong>línea roja (Unique Visitors)</strong> refleja el número de desarrolladores reales e individuales que ingresaron, lo que te ayuda a distinguir entre el tráfico recurrente y el descubrimiento de nuevos usuarios.</p>
+                <h3>🔍 Métricas de visitas</h3>
+                <p>
+                    La <strong>línea azul</strong> representa el total de visitas diarias a tu repositorio. 
+                    La <strong>línea roja</strong> refleja los usuarios únicos que ingresaron cada día. 
+                    Este histórico combina datos de Google Analytics (hasta agosto 2026) y datos en tiempo real de la API de GitHub.
+                </p>
             </div>
         </div>
+
+        <!-- TARJETA DE CLONES -->
+        <div class="card">
+            <h2>📦 Clones diarios</h2>
+            
+            <img class="plot-img" src="preview_plots/github_clones.webp" alt="Gráfico de clones históricos">
+            
+            <div class="description-box">
+                <h3>🔍 Métricas de clones</h3>
+                <p>
+                    La <strong>línea azul</strong> muestra el número de clones (descargas) de tu repositorio por día. 
+                    La <strong>línea roja</strong> indica cuántos desarrolladores únicos realizaron esos clones. 
+                    Datos obtenidos directamente de la API de GitHub desde que se activó el sistema.
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <footer>
-        <p>Actualizado automáticamente mediante GitHub Actions en tu repositorio fork.</p>
+        <p>Actualizado automáticamente · Datos acumulativos sin límite de 14 días</p>
     </footer>
 
 </body>
