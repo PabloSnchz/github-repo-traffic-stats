@@ -1,36 +1,96 @@
-# GitHub Repo Traffic Stats
+# 📊 Historial de Tráfico Acumulado — Bóveda del Gato Negro
 
-A simple tool to collect and view GitHub repos traffic history longer than 14 days using GitHub Actions.
+> Herramienta automatizada para recolectar, almacenar y visualizar el tráfico histórico de repositorios GitHub, **rompiendo el límite nativo de 14 días**.
 
-[![A screenshot of the website.](dashboard_screenshot.png)](https://PabloSnchz.github.io/github-repo-traffic-stats)
+---
 
-## Features
+## 🌐 Demo en vivo
 
-- Collect traffic metrics for all your repos using GitHub Actions
-- A simple web interface to view the stats locally or hosted using GitHub Pages
-- A demo website is here: [PabloSnchz.github.io/github-repo-traffic-stats](https://PabloSnchz.github.io/github-repo-traffic-stats)
+Puedes ver el dashboard completamente funcional aquí:  
+👉 **[https://pablosnchz.github.io/github-repo-traffic-stats/](https://pablosnchz.github.io/github-repo-traffic-stats/)**
 
-## How to use
+---
 
-1. Fork the repo
-2. Delete the existing data in the `data` and `preview_plots` folders
-3. Change the "owner" in `github_username.txt` and change the websites in `index.html`
-4. Create a GitHub token to access this API: https://docs.github.com/en/rest/metrics/traffic
-5. Add the token as an Action secret to the repo and name it `GH_TOKEN`
-6. In the settings, enable the Read and Write Action Permissions (to allow the action to push the data to the repo)
+## 🚀 ¿Qué hace este proyecto?
 
-All your public repos should now be queried at 23:30 UTC every day.
-The data is stored in the data folder.
-You can enable GitHub Pages to host the dashboard or host it locally using `python -m http.server` in the project root folder.
+Este sistema nació con un objetivo claro: **evitar que GitHub borre las estadísticas de tráfico cada 14 días**.
 
-## Contributing
+- ✅ **Recolecta diariamente** las métricas de visitas (`views`) y clones (`clones`) mediante GitHub Actions.
+- ✅ **Almacena los datos** de forma permanente en archivos CSV dentro del propio repositorio.
+- ✅ **Genera gráficos** en formato `.webp` con fondo oscuro y estilo visual idéntico a la **Bóveda del Gato Negro**.
+- ✅ **Despliega un dashboard público** con diseño oscuro, explicaciones en español y métricas acumulativas.
 
-Contributions are welcome. Open an Issue if you want to report a bug, have an idea or want to propose a change.
+---
 
-## Website Statistics
+## 📈 Proyectos monitoreados actualmente
 
-There is lightweight tracking with [Plausible](https://plausible.io/about) for the [website](https://PabloSnchz.github.io/github-repo-traffic-stats/) to get info about how many people are visiting. Everyone who is interested can look at these stats here: https://plausible.io/PabloSnchz.github.io%2Fgithub-repo-traffic-stats?period=30d. Only users without an AdBlocker are counted, so these statistics are underestimating the actual count of visitors. I would guess that quite a few people (including me) visiting the site have an AdBlocker.
+| Repositorio | Descripción |
+|-------------|-------------|
+| [`PabloSnchz/gw2-wallet-ligero`](https://github.com/PabloSnchz/gw2-wallet-ligero) | WebApp para Guild Wars 2: Cartera, MetaEventos, Cámara del Brujo, Raids y más. |
 
-## License
+---
 
-All code in this project is licensed under the MIT License.
+## 🛠️ Tecnologías utilizadas
+
+- **Python** (Pandas + Matplotlib) → Procesamiento de datos y generación de gráficos.
+- **GitHub Actions** → Ejecución diaria automatizada del script.
+- **GitHub Pages** → Alojamiento del dashboard público.
+- **HTML + CSS** → Interfaz visual con estilo oscuro unificado.
+
+---
+
+## 📂 Estructura del proyecto
+
+- `github-repo-traffic-stats/` (Carpeta raíz)
+  - `.github/workflows/` → Workflows de GitHub Actions.
+  - `data/` → Archivos CSV con el histórico acumulado.
+  - `preview_plots/` → Gráficos generados diariamente (.webp).
+  - `index.html` → Dashboard público (GitHub Pages).
+  - `create_preview_plots.py` → Script principal de Python.
+  - `query_github_traffic.py` → Consulta a la API de GitHub.
+  - `README.md` → Este archivo.
+
+---
+
+## 🧠 ¿Cómo funciona?
+
+1. El workflow `Query GitHub Traffic Data` se ejecuta diariamente (23:30 UTC).
+2. Consulta la API de GitHub y obtiene los últimos 14 días de tráfico.
+3. El workflow `Update Preview Plots` ejecuta el script Python, que:
+   - Fusiona los nuevos datos con el histórico acumulado.
+   - Limpia duplicados y genera gráficos.
+4. Los archivos `.webp` y el `index.html` se actualizan automáticamente.
+5. GitHub Pages despliega los cambios en tiempo real.
+
+---
+
+## 📊 Dashboard público
+
+El dashboard incluye dos secciones principales:
+
+- **Vistas diarias:** Muestra la evolución de visitas y usuarios únicos.  
+- **Clones diarios:** Muestra la evolución de clones y clonadores únicos.
+
+Cada gráfico cuenta con una **descripción explicativa** en español y sigue el diseño visual de la **Bóveda del Gato Negro**.
+
+👉 **[Ver el dashboard en vivo](https://pablosnchz.github.io/github-repo-traffic-stats/)**
+
+---
+
+## 📜 Licencia
+
+Este proyecto está bajo la licencia **MIT**.  
+Puedes usarlo, modificarlo y adaptarlo libremente.
+
+---
+
+## 🐈‍⬛ Proyecto relacionado
+
+Este sistema de métricas forma parte del ecosistema de la **Bóveda del Gato Negro**:
+
+- [Repositorio principal (WebApp GW2)](https://github.com/PabloSnchz/gw2-wallet-ligero)
+- [Link in Bio (Instagram / Redes)](https://pablosnchz.github.io/bio/)
+
+---
+
+*Hecho con ❤️ para la comunidad · Bóveda del Gato Negro*
