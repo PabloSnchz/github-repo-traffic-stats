@@ -110,50 +110,64 @@ def generate_synthetic_views(start_date, end_date, total_views, total_users):
 def generate_synthetic_clones_periods():
     """
     Genera datos sintéticos de clones basados en tu conocimiento empírico.
+    Con transiciones suaves entre periodos (caídas graduales).
     Periodo 1: Febrero - Abril (Promedio 450)
     Periodo 2: Mayo - Junio (Promedio 225 - caída del 50%)
     Periodo 3: Julio - 14 de Agosto (Promedio 14 - 100 por semana)
     """
-    all_dates = []
-    all_clones = []
-    all_unique = []
-
-    # Periodo 1: 19 Feb - 30 Abr
-    start1 = pd.to_datetime("2026-02-19")
-    end1 = pd.to_datetime("2026-04-30")
-    days1 = pd.date_range(start=start1, end=end1, freq='D')
-    clones1 = np.random.poisson(lam=450, size=len(days1))
-    unique1 = np.random.poisson(lam=380, size=len(days1)) # 380 únicos aprox
-
-    # Periodo 2: 1 May - 30 Jun
-    start2 = pd.to_datetime("2026-05-01")
-    end2 = pd.to_datetime("2026-06-30")
-    days2 = pd.date_range(start=start2, end=end2, freq='D')
-    clones2 = np.random.poisson(lam=225, size=len(days2))
-    unique2 = np.random.poisson(lam=190, size=len(days2))
-
-    # Periodo 3: 1 Jul - 14 Ago
-    start3 = pd.to_datetime("2026-07-01")
-    end3 = pd.to_datetime("2026-08-14")
-    days3 = pd.date_range(start=start3, end=end3, freq='D')
-    clones3 = np.random.poisson(lam=14, size=len(days3))
-    unique3 = np.random.poisson(lam=10, size=len(days3))
-
-    # Unir todo
-    all_dates = list(days1) + list(days2) + list(days3)
-    all_clones = list(clones1) + list(clones2) + list(clones3)
-    all_unique = list(unique1) + list(unique2) + list(unique3)
-
-    # Crear DataFrame
+    
+    # Definir los puntos de control (fecha, valor_promedio)
+    # Usamos puntos intermedios para crear curvas suaves
+    control_points = [
+        ("2026-02-19", 450),  # Inicio: 450
+        ("2026-04-20", 450),  # Se mantiene alto hasta el 20 de abril
+        ("2026-05-10", 340),  # Empieza a bajar suavemente
+        ("2026-06-01", 225),  # Llega a 225 a principios de junio
+        ("2026-06-20", 225),  # Se mantiene en 225
+        ("2026-07-10", 120),  # Empieza a bajar de nuevo
+        ("2026-08-01", 14),   # Llega a 14 en agosto
+        ("2026-08-14", 14)    # Se mantiene en 14 hasta el 14 de agosto
+    ]
+    
+    # Convertir a DataFrame
+    df_control = pd.DataFrame(control_points, columns=['date', 'avg_clones'])
+    df_control['date'] = pd.to_datetime(df_control['date'])
+    df_control.set_index('date', inplace=True)
+    
+    # Generar todos los días desde el inicio hasta el final
+    start_date = pd.to_datetime("2026-02-19")
+    end_date = pd.to_datetime("2026-08-14")
+    all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
+    
+    # Interpolar los valores promedio para cada día (transición suave)
+    # Reindexamos el DataFrame de control para que tenga todos los días y luego interpolamos
+    df_control_daily = df_control.reindex(all_dates).interpolate(method='linear')
+    
+    # Ahora generamos datos aleatorios basados en esos promedios diarios
+    clones = []
+    unique = []
+    
+    for date in all_dates:
+        avg = df_control_daily.loc[date, 'avg_clones']
+        # Generar un valor aleatorio alrededor del promedio (con ruido)
+        val_clones = int(np.random.poisson(lam=avg))
+        val_unique = int(np.random.poisson(lam=avg * 0.85))  # 85% de los clones son únicos aprox
+        
+        # Asegurar mínimo 1
+        if val_clones < 1: val_clones = 1
+        if val_unique < 1: val_unique = 1
+        
+        clones.append(val_clones)
+        unique.append(val_unique)
+    
+    # Crear DataFrame final
     df = pd.DataFrame({
         'date': all_dates,
-        'count': all_clones,
-        'unique': all_unique
+        'count': clones,
+        'unique': unique
     })
-    # Asegurar que ningún día tenga 0 clones (mínimo 1)
-    df['count'] = df['count'].clip(lower=1)
-    df['unique'] = df['unique'].clip(lower=1)
-    print(f"✅ Datos sintéticos de clones generados: {len(df)} días")
+    
+    print(f"✅ Datos sintéticos de clones generados (curva suave): {len(df)} días")
     return df
 
 def merge_all_data(ga_daily, synthetic_data, api_data):
