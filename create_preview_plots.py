@@ -10,23 +10,22 @@ def create_plot(df, title, filename, is_clones=False):
     df.index = pd.to_datetime(df.index).date
     df = df[~df.index.duplicated(keep='last')]
     
-    if df.empty:
-        return
-        
-    first_day = df.index.min()
-    last_day = df.index.max()
+    # 2. Forzar un rango visual de los últimos 14 días reales hasta hoy
+    today = datetime.now().date()
+    start_date = today - timedelta(days=14)
     
-    if first_day == last_day:
-        first_day = first_day - timedelta(days=7)
-
-    # Agregar ceros en los días donde no hubo actividad para evitar saltos en la gráfica
-    date_range = pd.date_range(start=first_day, end=last_day, freq='D').date
-    df_full = pd.DataFrame(index=date_range, columns=df.columns).fillna(0)
+    # Crear un esqueleto con los 14 días rellenos de ceros
+    date_range = pd.date_range(start=start_date, end=today, freq='D').date
+    df_full = pd.DataFrame(index=date_range, columns=['count', 'uniques']).fillna(0)
     
     df_full.index = pd.to_datetime(df_full.index).date
     df_full = df_full[~df_full.index.duplicated(keep='last')]
     
-    df_full.update(df)
+    # Cruzar los datos del CSV sobre el esqueleto de 14 días
+    if not df.empty:
+        # Filtrar solo los datos que entren en este rango de 14 días
+        df_filtered = df.loc[start_date:today]
+        df_full.update(df_filtered)
     
     # Determinar etiquetas según el tipo de datos (visitas o clones)
     count_label = "Clones" if is_clones else "Views"
@@ -37,12 +36,12 @@ def create_plot(df, title, filename, is_clones=False):
     total_uniques = df_full["uniques"].sum()
     
     plt.figure(figsize=(12, 6))
-    plt.plot(df_full.index, df_full["count"], label=count_label, color=color_line1)
-    plt.plot(df_full.index, df_full["uniques"], label=unique_label, color='red')
+    plt.plot(df_full.index, df_full["count"], label=count_label, color=color_line1, linewidth=2)
+    plt.plot(df_full.index, df_full["uniques"], label=unique_label, color='red', linewidth=2)
     
     plt.title(f"{title} ({total_count} {count_label}, {total_uniques} {unique_label})")
-    plt.xlabel('Date')
-    plt.ylabel('Count')
+    plt.xlabel('Fecha')
+    plt.ylabel('Cantidad')
     plt.legend()
     plt.gca().xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
     plt.gcf().autofmt_xdate()
@@ -214,7 +213,7 @@ def main():
     
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print("index.html sobreescrito dinámicamente con múltiples carpetas de datos")
+    print("index.html sobreescrito exitosamente")
 
 if __name__ == "__main__":
     main()
