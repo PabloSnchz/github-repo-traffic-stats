@@ -200,28 +200,47 @@ def plot_traffic(df, title, ylabel, file_name, show_unique=True):
     if df.empty:
         print(f"⚠️ No hay datos para graficar: {title}")
         return
-    plt.figure(figsize=(14, 7))
+    
+    # Configurar el estilo oscuro de la "Bóveda"
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(14, 7))
+    fig.patch.set_facecolor('#0d1117')   # Fondo del lienzo (igual que el body)
+    ax.set_facecolor('#161b22')          # Fondo del área del gráfico (igual que las cards)
+    
+    # Colores de la Bóveda: Azul cian para la línea principal, Dorado para la secundaria
+    color_main = '#58a6ff'   # Azul cian
+    color_sec = '#d4af37'    # Dorado
     
     # Determinar qué columnas graficar
     if 'views' in df.columns:
-        plt.plot(df.index, df['views'], marker='o', linestyle='-', color='#1f77b4', label='Vistas / Clones', markersize=2)
+        ax.plot(df.index, df['views'], marker='o', linestyle='-', color=color_main, label='Vistas / Clones', markersize=2)
         if show_unique and 'unique_visitors' in df.columns:
-            plt.plot(df.index, df['unique_visitors'], marker='o', linestyle='-', color='#d62728', label='Únicos', markersize=2)
+            ax.plot(df.index, df['unique_visitors'], marker='o', linestyle='-', color=color_sec, label='Únicos', markersize=2)
     elif 'count' in df.columns:
-        plt.plot(df.index, df['count'], marker='o', linestyle='-', color='#1f77b4', label='Clones', markersize=2)
+        ax.plot(df.index, df['count'], marker='o', linestyle='-', color=color_main, label='Clones', markersize=2)
         if show_unique and 'unique' in df.columns:
-            plt.plot(df.index, df['unique'], marker='o', linestyle='-', color='#d62728', label='Clonadores Únicos', markersize=2)
+            ax.plot(df.index, df['unique'], marker='o', linestyle='-', color=color_sec, label='Clonadores Únicos', markersize=2)
     
-    plt.title(title, fontsize=16)
-    plt.ylabel(ylabel, fontsize=12)
-    plt.xlabel("Fecha", fontsize=12)
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-    plt.gcf().autofmt_xdate()
+    # Estilizar ejes y texto
+    ax.set_title(title, fontsize=16, color='#e6edf3')
+    ax.set_ylabel(ylabel, fontsize=12, color='#8b949e')
+    ax.set_xlabel("Fecha", fontsize=12, color='#8b949e')
+    ax.grid(True, alpha=0.3, color='#30363d')
+    
+    # Color de los ticks (números de los ejes)
+    ax.tick_params(axis='x', colors='#8b949e')
+    ax.tick_params(axis='y', colors='#8b949e')
+    
+    # Color de la leyenda
+    legend = ax.legend()
+    plt.setp(legend.get_texts(), color='#e6edf3')
+    
+    # Formato de fechas
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    fig.autofmt_xdate()
     
     ensure_dir("preview_plots/")
-    plt.savefig(f"preview_plots/{file_name}", dpi=100, bbox_inches='tight')
+    plt.savefig(f"preview_plots/{file_name}", dpi=100, bbox_inches='tight', facecolor='#0d1117')
     plt.close()
     print(f"✅ Gráfico guardado: preview_plots/{file_name}")
 
