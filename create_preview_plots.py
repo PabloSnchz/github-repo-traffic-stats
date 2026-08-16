@@ -74,25 +74,29 @@ def process_raw_ga_to_daily(raw_file, output_file):
         print(f"⚠️ No se encontró {raw_file}. No se procesarán datos diarios.")
         return None
     
-    # Leer saltando la primera fila (encabezado)
-    df = pd.read_csv(raw_file, skiprows=1)
-    # Si el archivo tiene una columna de índice extra, la manejamos
-    if df.shape[1] == 4:
+    try:
+        # Leer saltando la primera línea (encabezado problemático)
+        df = pd.read_csv(raw_file, skiprows=1, header=None)
+        # Asignar nombres de columna
         df.columns = ['index', 'datetime', 'views', 'unique_visitors']
-    else:
-        df.columns = ['datetime', 'views', 'unique_visitors']
-    
-    # Convertir a fecha
-    df['date'] = df['datetime'].astype(str).str[:8]
-    df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
-    
-    # Agrupar por fecha y sumar
-    daily = df.groupby('date')[['views', 'unique_visitors']].sum().reset_index()
-    
-    # Guardar
-    daily.to_csv(output_file, index=False)
-    print(f"✅ Datos diarios guardados en {output_file}")
-    return daily
+        
+        # Eliminar la fila del total (si existe)
+        df = df[df['index'] != 'Total']
+        
+        # Convertir a fecha
+        df['date'] = df['datetime'].astype(str).str[:8]
+        df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+        
+        # Agrupar por fecha y sumar
+        daily = df.groupby('date')[['views', 'unique_visitors']].sum().reset_index()
+        
+        # Guardar
+        daily.to_csv(output_file, index=False)
+        print(f"✅ Datos diarios guardados en {output_file}")
+        return daily
+    except Exception as e:
+        print(f"⚠️ Error al procesar {raw_file}: {e}")
+        return None
 
 def generate_synthetic_data(start_date, end_date, total_views, total_users):
     """Genera datos sintéticos con variación aleatoria sin sobrepasar el total"""
