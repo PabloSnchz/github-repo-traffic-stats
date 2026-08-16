@@ -109,24 +109,20 @@ def generate_synthetic_views(start_date, end_date, total_views, total_users):
 
 def generate_synthetic_clones_periods():
     """
-    Genera datos sintéticos de clones basados en tu conocimiento empírico.
-    Con transiciones suaves entre periodos (caídas graduales).
-    Periodo 1: Febrero - Abril (Promedio 450)
-    Periodo 2: Mayo - Junio (Promedio 225 - caída del 50%)
-    Periodo 3: Julio - 14 de Agosto (Promedio 14 - 100 por semana)
+    Genera datos sintéticos de clones con transiciones SUAVES y orgánicas.
+    Usa una caminata aleatoria (Random Walk) basada en la tendencia interpolada.
     """
     
-    # Definir los puntos de control (fecha, valor_promedio)
-    # Usamos puntos intermedios para crear curvas suaves
+    # Puntos de control para la tendencia central
     control_points = [
         ("2026-02-19", 450),  # Inicio: 450
-        ("2026-04-20", 450),  # Se mantiene alto hasta el 20 de abril
-        ("2026-05-10", 340),  # Empieza a bajar suavemente
-        ("2026-06-01", 225),  # Llega a 225 a principios de junio
-        ("2026-06-20", 225),  # Se mantiene en 225
-        ("2026-07-10", 120),  # Empieza a bajar de nuevo
-        ("2026-08-01", 14),   # Llega a 14 en agosto
-        ("2026-08-14", 14)    # Se mantiene en 14 hasta el 14 de agosto
+        ("2026-04-25", 450),  # Se mantiene alto hasta finales de abril
+        ("2026-05-15", 340),  # Empieza a bajar suavemente (mitad de mayo)
+        ("2026-06-10", 225),  # Llega a 225 a mediados de junio
+        ("2026-07-01", 180),  # Sigue bajando suavemente
+        ("2026-07-20", 60),   # Baja a 60 a mediados de julio
+        ("2026-08-05", 20),   # Llega a 20 a principios de agosto
+        ("2026-08-14", 14)    # Se estabiliza en 14
     ]
     
     # Convertir a DataFrame
@@ -134,31 +130,52 @@ def generate_synthetic_clones_periods():
     df_control['date'] = pd.to_datetime(df_control['date'])
     df_control.set_index('date', inplace=True)
     
-    # Generar todos los días desde el inicio hasta el final
+    # Generar todos los días
     start_date = pd.to_datetime("2026-02-19")
     end_date = pd.to_datetime("2026-08-14")
     all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
     
-    # Interpolar los valores promedio para cada día (transición suave)
-    # Reindexamos el DataFrame de control para que tenga todos los días y luego interpolamos
-    df_control_daily = df_control.reindex(all_dates).interpolate(method='linear')
+    # Interpolar la tendencia central (crea la línea suave ideal)
+    df_trend = df_control.reindex(all_dates).interpolate(method='linear')
     
-    # Ahora generamos datos aleatorios basados en esos promedios diarios
+    # Generar la caminata aleatoria (Random Walk) alrededor de la tendencia
     clones = []
     unique = []
     
+    # Semilla inicial para el primer día
+    current_clones = 450
+    current_unique = 380
+    
     for date in all_dates:
-        avg = df_control_daily.loc[date, 'avg_clones']
-        # Generar un valor aleatorio alrededor del promedio (con ruido)
-        val_clones = int(np.random.poisson(lam=avg))
-        val_unique = int(np.random.poisson(lam=avg * 0.85))  # 85% de los clones son únicos aprox
+        target_avg = df_trend.loc[date, 'avg_clones']
         
-        # Asegurar mínimo 1
-        if val_clones < 1: val_clones = 1
-        if val_unique < 1: val_unique = 1
+        # Calcular la diferencia entre el valor actual y la tendencia (la "inercia")
+        # Si estamos muy lejos de la tendencia, el random walk "tira" hacia ella
+        error = target_avg - current_clones
+        adjustment = error * 0.1  # Corregimos un 10% del error por día (efecto "muelle")
         
-        clones.append(val_clones)
-        unique.append(val_unique)
+        # Añadir pequeña variación aleatoria (ruido) entre -10 y +10
+        noise = np.random.randint(-8, 9)
+        
+        # Calcular el nuevo valor
+        current_clones = int(current_clones + adjustment + noise)
+        
+        # Asegurar que no baje de 1 y que no tenga picos extremos
+        if current_clones < 1: current_clones = 1
+        if current_clones > 500: current_clones = 500
+        
+        # Hacer lo mismo para los usuarios únicos (proporcional a los clones)
+        target_unique = target_avg * 0.85
+        error_u = target_unique - current_unique
+        adjustment_u = error_u * 0.1
+        noise_u = np.random.randint(-7, 8)
+        
+        current_unique = int(current_unique + adjustment_u + noise_u)
+        if current_unique < 1: current_unique = 1
+        if current_unique > 450: current_unique = 450
+        
+        clones.append(current_clones)
+        unique.append(current_unique)
     
     # Crear DataFrame final
     df = pd.DataFrame({
@@ -167,7 +184,7 @@ def generate_synthetic_clones_periods():
         'unique': unique
     })
     
-    print(f"✅ Datos sintéticos de clones generados (curva suave): {len(df)} días")
+    print(f"✅ Datos sintéticos de clones generados (curva suave y orgánica): {len(df)} días")
     return df
 
 def merge_all_data(ga_daily, synthetic_data, api_data):
