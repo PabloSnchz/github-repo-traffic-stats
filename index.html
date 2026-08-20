@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bóveda del Gato Negro — Tráfico Histórico</title>
   <style>
+    /* Estilos idénticos a la Guía de Usuario Avanzada v6.6.2 */
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       background:#0e0e10; color:#e9e9ee;
@@ -16,49 +17,69 @@
       background:#141418; border-radius:24px; padding:40px;
       box-shadow:0 0 0 1px #1d1d20 inset,0 8px 24px rgba(0,0,0,0.3);
     }
-    h1 { font-size:2rem; margin-bottom:8px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    h1 .logo-text { display: flex; align-items: center; gap: 10px; }
+    h1 {
+      font-size:2rem; margin-bottom:8px;
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    h1 .logo-text {
+      display: flex; align-items: center; gap: 10px;
+    }
     h1 .gold { color: #ffd966; }
-    .version { color:#a0a0a6; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #242428; }
-    
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      margin: 24px 0;
+    .version { 
+      color:#a0a0a6; margin-bottom:24px; padding-bottom:16px; 
+      border-bottom:1px solid #242428; 
     }
-    .kpi-card {
-      background: #0f1116;
-      border: 1px solid #26262b;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      transition: all 0.2s ease;
+    h2 {
+      font-size:1.5rem; margin:32px 0 16px 0; padding-bottom:8px;
+      border-bottom:2px solid #ffd966; display:inline-block;
     }
-    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.45); }
-    .kpi-card--views { border-left: 3px solid #58a6ff; }
-    .kpi-card--unique { border-left: 3px solid #ffd966; }
-    .kpi-card--clones { border-left: 3px solid #a0ffc8; }
-    .kpi-card--cloners { border-left: 3px solid #b19cd9; }
-    .kpi-value { font-size: 1.8rem; font-weight: 800; color: #e0e4ed; }
-    .kpi-label { font-size: 0.7rem; color: #9aa2b8; margin-top: 6px; text-transform: uppercase; }
+    p, li { margin:6px 0; }
     
-    h2 { font-size:1.5rem; margin:32px 0 16px 0; padding-bottom:8px; border-bottom:2px solid #ffd966; display:inline-block; }
-    .card { margin: 24px 0; padding: 20px; background:#0a0c10; border-radius:12px; border:1px solid #2a2c35; }
-    .card h3 { color: #ffd966; font-size: 1.25rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .plot-img { width: 100%; height: auto; border-radius: 8px; display: block; border: 1px solid #2a2c35; }
-    .description-box { margin-top: 20px; padding: 16px; background:#0f1116; border-left: 4px solid #ffd966; border-radius: 0 8px 8px 0; }
+    /* Estilos de las tarjetas de gráficos */
+    .card {
+      margin: 24px 0; padding: 20px;
+      background:#0a0c10; border-radius:12px;
+      border:1px solid #2a2c35;
+    }
+    .card h3 {
+      color: #ffd966; font-size: 1.25rem; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    
+    /* Imágenes de gráficos (con fondo oscuro integrado desde el script) */
+    .plot-img {
+      width: 100%; height: auto; border-radius: 8px;
+      background: transparent; display: block;
+      border: 1px solid #2a2c35;
+    }
+    
+    /* Cajas de descripción estilo guía */
+    .description-box {
+      margin-top: 20px; padding: 16px;
+      background:#0f1116; border-left: 4px solid #ffd966;
+      border-radius: 0 8px 8px 0;
+    }
     .description-box strong { color: #ffd966; }
-    .footer-note { text-align:center; margin-top:32px; padding-top:16px; border-top:1px solid #2a2c35; color:#a0a0a6; font-size:0.85rem; }
-    .footer-note a { color:#ffd966; text-decoration:none; }
     
-    @media (max-width:600px) { .container { padding:20px; } h1 { font-size:1.6rem; } }
+    /* Footer idéntico a la guía */
+    .footer-note {
+      text-align:center; margin-top:32px; padding-top:16px;
+      border-top:1px solid #2a2c35; color:#a0a0a6; font-size:0.85rem;
+    }
+    .footer-note a { color:#ffd966; text-decoration:none; }
+    .footer-note a:hover { text-decoration:underline; }
+    
+    @media (max-width:600px) {
+      .container { padding:20px; }
+      h1 { font-size:1.6rem; }
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
 
+  <!-- HEADER IDÉNTICO A LA GUÍA -->
   <h1>
     <span class="logo-text">
       🐈‍⬛ <span class="gold">Bóveda del Gato Negro</span>
@@ -75,7 +96,7 @@
   <h2>📈 Vistas diarias</h2>
   <div class="card">
     <h3>🔍 Métricas de visitas</h3>
-    <img class="plot-img" src="preview_plots/gw2-wallet-ligero.webp" alt="Gráfico de visitas históricas">
+    <img class="plot-img" src="preview_plots/github_views.webp" alt="Gráfico de visitas históricas">
     <div class="description-box">
       <p>
         La <strong style="color: #58a6ff;">línea azul</strong> representa el total de visitas diarias a tu repositorio. 
@@ -89,7 +110,7 @@
   <h2>📦 Clones diarios</h2>
   <div class="card">
     <h3>🔍 Métricas de clones</h3>
-    <img class="plot-img" src="preview_plots/gw2-wallet-ligero_clones.webp" alt="Gráfico de clones históricos">
+    <img class="plot-img" src="preview_plots/github_clones.webp" alt="Gráfico de clones históricos">
     <div class="description-box">
       <p>
         La <strong style="color: #58a6ff;">línea azul</strong> muestra el número de clones (descargas) de tu repositorio por día. 
@@ -99,6 +120,7 @@
     </div>
   </div>
 
+  <!-- FOOTER IDÉNTICO A LA GUÍA -->
   <div class="footer-note">
     🐈‍⬛ <strong>Bóveda del Gato Negro</strong> — Respaldo Automatizado<br>
     Actualizado vía GitHub Actions · Datos acumulativos sin límite de 14 días<br>
