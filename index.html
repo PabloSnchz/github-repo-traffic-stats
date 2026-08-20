@@ -54,7 +54,7 @@
     .card h3 { color: #ffd966; font-size: 1.25rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 
     .chart-wrap {
-      position: relative; width: 100%; max-height: 400px;
+      position: relative; width: 100%; height: 350px;
       background: #0a0c10; border-radius: 8px; padding: 12px;
     }
 
@@ -104,7 +104,10 @@
     Visualización y respaldo de métricas a largo plazo para evitar la restricción de 14 días de GitHub.
     Datos reconstruidos desde el 19 de febrero de 2026 y combinados con Google Analytics.
   </p>
-  <span id="statusBadge" class="status-badge">⏳ Cargando estado...</span>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+    <span id="statusBadge" class="status-badge">⏳ Cargando estado...</span>
+    <span id="connectionBadge" class="status-badge status-badge--stale">🔌 Verificando conexión con GitHub...</span>
+  </div>
 
   <!-- KPIs -->
   <div class="kpi-grid">
@@ -165,13 +168,13 @@
   'use strict';
   var LOG = '[TrafficStats]';
 
-  // ====== DATOS HISTÓRICOS HARDCODEADOS ======
+  // ====== DATOS HISTÓRICOS HARDCODEADOS (Feb-Ago 2026) ======
   var HARDCODED = {
     views: { total: 25000, uniques: 1500, days: 183 },
     clones: { total: 7000, uniques: 800, days: 183 }
   };
 
-  // ====== Distribución semanal histórica ======
+  // ====== Generar distribución histórica ======
   function generateHistoricalDates() {
     var dates = [];
     var end = new Date('2026-08-20');
@@ -303,6 +306,9 @@
         hist.dates.push(row.date);
         hist.views.push(Number(row.count) || 0);
         hist.uniques.push(Number(row.uniques) || 0);
+      } else {
+        hist.views[idx] = Number(row.count) || hist.views[idx];
+        hist.uniques[idx] = Number(row.uniques) || hist.uniques[idx];
       }
     });
     csvClones.forEach(function(row) {
@@ -311,6 +317,9 @@
         hist.dates.push(row.date);
         hist.clones.push(Number(row.count) || 0);
         hist.cloners.push(Number(row.uniques) || 0);
+      } else {
+        hist.clones[idx] = Number(row.count) || hist.clones[idx];
+        hist.cloners[idx] = Number(row.uniques) || hist.cloners[idx];
       }
     });
 
@@ -341,8 +350,8 @@
     var totalClones = HARDCODED.clones.total + sum(csvClones, 'count');
     var totalCloners = HARDCODED.clones.uniques + sum(csvClones, 'uniques');
 
-    var viewsAvg = totalDays(totalViews, labels.length);
-    var clonesAvg = totalDays(totalClones, labels.length);
+    var viewsAvg = labels.length > 0 ? Math.round(totalViews / labels.length) : 0;
+    var clonesAvg = labels.length > 0 ? Math.round(totalClones / labels.length) : 0;
 
     document.getElementById('totalViews').textContent = fmt(totalViews);
     document.getElementById('totalUnique').textContent = fmt(totalUnique);
@@ -355,10 +364,21 @@
     document.getElementById('clonersTotal').textContent = fmt(totalCloners);
     document.getElementById('clonesAvg').textContent = fmt(clonesAvg) + ' / día';
 
-    // Estado
+    // Estado de datos
     var statusEl = document.getElementById('statusBadge');
     statusEl.textContent = '✅ Datos actualizados (' + labels.length + ' días con datos)';
     statusEl.className = 'status-badge status-badge--fresh';
+
+    // Estado de conexión con GitHub
+    var connectionEl = document.getElementById('connectionBadge');
+    if (csvViews.length > 0 || csvClones.length > 0) {
+      var lastDate = csvViews.length > 0 ? csvViews[csvViews.length - 1].date : '—';
+      connectionEl.textContent = '🔌 Conectado a GitHub · Último dato: ' + lastDate;
+      connectionEl.className = 'status-badge status-badge--fresh';
+    } else {
+      connectionEl.textContent = '⚠️ Sin datos recientes de GitHub (mostrando solo histórico)';
+      connectionEl.className = 'status-badge status-badge--stale';
+    }
 
     // Footer timestamp
     var footerTs = document.getElementById('footerTimestamp');
@@ -366,8 +386,6 @@
 
     console.log(LOG, 'Vistas:', totalViews, '| Clones:', totalClones);
   }
-
-  function totalDays(total, days) { return days > 0 ? Math.round(total / days) : 0; }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
